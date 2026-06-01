@@ -1,0 +1,16 @@
+# dbt connection profile for RetailCo warehouse
+# This file tells dbt how to connect to PostgreSQL.
+# In production, use environment variables (not hardcoded passwords).
+
+retailco:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('WAREHOUSE_DB_HOST', 'warehouse-db') }}"
+      port: "{{ env_var('WAREHOUSE_DB_PORT', '5432') | int }}"
+      user: "{{ env_var('WAREHOUSE_DB_USER', 'wh_user') }}"
+      password: "{{ env_var('WAREHOUSE_DB_PASSWORD', 'wh_pass') }}"
+      dbname: "{{ env_var('WAREHOUSE_DB_NAME', 'warehouse') }}"
+      schema: marts
+      threads: 4

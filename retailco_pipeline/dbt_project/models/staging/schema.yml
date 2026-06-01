@@ -1,0 +1,104 @@
+version: 2
+
+sources:
+  - name: raw
+    database: warehouse
+    schema: raw
+    tables:
+      - name: customers
+      - name: products
+      - name: stores
+      - name: employees
+      - name: orders
+      - name: order_items
+      - name: payments
+      - name: inventory_movements
+      - name: payment_methods
+
+models:
+  - name: stg_customers
+    description: "Cleaned customer data with type casting. Includes soft-deleted records for SCD2."
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: email
+        tests:
+          - not_null
+      - name: segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['retail', 'wholesale', 'vip', 'online', 'corporate']
+
+  - name: stg_products
+    description: "Cleaned product data. Includes discontinued products for SCD2."
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+      - name: unit_price
+        tests:
+          - not_null
+
+  - name: stg_orders
+    description: "Cleaned orders. Includes cancelled orders (is_deleted=true)."
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['pending', 'paid', 'shipped', 'delivered', 'cancelled']
+
+  - name: stg_payments
+    description: "Payments with anomaly classification flag."
+    columns:
+      - name: payment_id
+        tests:
+          - not_null
+          - unique
+      - name: payment_flag
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['valid', 'zero_amount', 'unexplained_negative']
+
+  - name: stg_order_items
+    columns:
+      - name: order_item_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_stores
+    columns:
+      - name: store_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_employees
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_inventory_movements
+    columns:
+      - name: movement_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_payment_methods
+    columns:
+      - name: payment_method_id
+        tests:
+          - not_null
+          - unique

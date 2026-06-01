@@ -1,0 +1,23 @@
+name: 'retailco'
+version: '1.0.0'
+config-version: 2
+profile: 'retailco'
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+models:
+  retailco:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+snapshots:
+  retailco:
+    +target_schema: snapshots
+    +strategy: timestamp
+    +updated_at: updated_at

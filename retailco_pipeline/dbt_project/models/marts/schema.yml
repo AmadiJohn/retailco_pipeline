@@ -1,0 +1,159 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "Date dimension covering 2023–2025 with Nigerian public holidays."
+    columns:
+      - name: date_key
+        tests:
+          - not_null
+          - unique
+      - name: calendar_date
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_customer
+    description: "SCD2 customer dimension. One row per customer version."
+    columns:
+      - name: customer_sk
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: dim_product
+    description: "SCD2 product dimension. One row per product version."
+    columns:
+      - name: product_sk
+        tests:
+          - not_null
+          - unique
+      - name: product_id
+        tests:
+          - not_null
+
+  - name: dim_store
+    columns:
+      - name: store_sk
+        tests:
+          - not_null
+          - unique
+      - name: store_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_employee
+    columns:
+      - name: employee_sk
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_payment_method
+    columns:
+      - name: payment_method_sk
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_sales
+    description: >
+      Transactional sales fact. One row per order line item.
+      Grain: order_item_id. All FKs are surrogate keys.
+    columns:
+      - name: sales_sk
+        tests:
+          - not_null
+          - unique
+      - name: customer_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_sk
+      - name: product_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product')
+              field: product_sk
+      - name: store_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_store')
+              field: store_sk
+      - name: order_date_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: revenue
+        tests:
+          - not_null
+
+  - name: fct_payments
+    description: >
+      Transactional payments fact. One row per valid payment event.
+      Excludes anomalous payments (see flagged_payments).
+    columns:
+      - name: payment_sk
+        tests:
+          - not_null
+          - unique
+      - name: payment_method_sk
+        tests:
+          - relationships:
+              to: ref('dim_payment_method')
+              field: payment_method_sk
+
+  - name: fct_inventory_daily
+    description: >
+      Periodic snapshot. One row per product × store × day.
+      Built by aggregating inventory_movements into daily balances.
+    columns:
+      - name: inventory_daily_sk
+        tests:
+          - not_null
+          - unique
+      - name: product_sk
+        tests:
+          - relationships:
+              to: ref('dim_product')
+              field: product_sk
+      - name: store_sk
+        tests:
+          - relationships:
+              to: ref('dim_store')
+              field: store_sk
+
+  - name: fct_order_lifecycle
+    description: >
+      Accumulating snapshot. One row per order, status timestamps fill in over time.
+    columns:
+      - name: lifecycle_sk
+        tests:
+          - not_null
+          - unique
+      - name: order_id
+        tests:
+          - not_null
+          - unique
+      - name: customer_sk
+        tests:
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_sk
+
+  - name: flagged_payments
+    description: "Data quality artifact. Anomalous payments excluded from fct_payments."
+    columns:
+      - name: payment_id
+        tests:
+          - not_null
+          - unique

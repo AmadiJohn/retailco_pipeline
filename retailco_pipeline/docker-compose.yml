@@ -1,0 +1,132 @@
+version: "3.9"
+
+
+# RetailCo Modern Data Pipeline – Docker Compose
+# Starts: Airflow, Lake Postgres, Warehouse Postgres
+
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.9.2-python3.11
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+    AIRFLOW__CORE__FERNET_KEY: "your-fernet-key-here-generate-with-python-cryptography"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "your-secret-key-here"
+    # ERP API
+    ERP_API_KEY: "hrp_c16e357d63d18f09020510253ce00f54c773f3de4048a9890c9c148489cb51ca"
+    ERP_BASE_URL: "https://hngstage8da-55c7f5f769c8.herokuapp.com"
+    # Lake DB (raw data lake)
+    LAKE_DB_HOST: lake-db
+    LAKE_DB_PORT: "5432"
+    LAKE_DB_NAME: lake
+    LAKE_DB_USER: lake_user
+    LAKE_DB_PASSWORD: lake_pass
+    # Warehouse DB (analytics)
+    WAREHOUSE_DB_HOST: warehouse-db
+    WAREHOUSE_DB_PORT: "5432"
+    WAREHOUSE_DB_NAME: warehouse
+    WAREHOUSE_DB_USER: wh_user
+    WAREHOUSE_DB_PASSWORD: wh_pass
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/plugins:/opt/airflow/plugins
+    - ./extractor:/opt/airflow/extractor
+    - ./dlt_pipeline:/opt/airflow/dlt_pipeline
+    - ./dbt_project:/opt/airflow/dbt_project
+    - airflow_logs:/opt/airflow/logs
+  depends_on:
+    airflow-db:
+      condition: service_healthy
+    lake-db:
+      condition: service_healthy
+    warehouse-db:
+      condition: service_healthy
+
+services:
+
+  #  Metadata DB for Airflow itself 
+  airflow-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+
+  # Raw Data Lake (stores API extracts) 
+  lake-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: lake_user
+      POSTGRES_PASSWORD: lake_pass
+      POSTGRES_DB: lake
+    ports:
+      - "5433:5432"
+    volumes:
+      - lake_db_data:/var/lib/postgresql/data
+      - ./docker/lake_init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "lake_user", "-d", "lake"]
+      interval: 10s
+      retries: 5
+
+  #  Analytics Warehouse 
+  warehouse-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: wh_user
+      POSTGRES_PASSWORD: wh_pass
+      POSTGRES_DB: warehouse
+    ports:
+      - "5434:5432"
+    volumes:
+      - warehouse_db_data:/var/lib/postgresql/data
+      - ./docker/warehouse_init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "wh_user", "-d", "warehouse"]
+      interval: 10s
+      retries: 5
+
+  # Airflow Web UI
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      retries: 5
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+
+  # One-time DB init + admin user creation
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create
+          --username admin
+          --password admin
+          --firstname Admin
+          --lastname User
+          --role Admin
+          --email admin@retailco.com
+      "
+    restart: "no"
+
+volumes:
+  airflow_db_data:
+  airflow_logs:
+  lake_db_data:
+  warehouse_db_data:

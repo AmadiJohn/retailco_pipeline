@@ -1,0 +1,10 @@
+/.vscode
+/backup.yml
+/create_database.sql
+/create_schemas.sql
+/create_table.sql
+/create_warehouse_database.sql
+/r.ipynb
+/run_pipeline.py
+/test_api.ipynb
+/test_api_1.ipynb

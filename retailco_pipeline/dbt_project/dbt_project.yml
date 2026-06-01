@@ -1,0 +1,30 @@
+name: 'retailco'
+version: '1.0.0'
+config-version: 2
+
+profile: 'retailco'
+
+# Where dbt looks for models
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  retailco:
+    staging:
+      +schema: staging
+      +materialized: view        # Staging = views (lightweight, always fresh)
+    marts:
+      +schema: marts
+      +materialized: table       # Marts = tables (fast for BI tools to query)
+
+snapshots:
+  retailco:
+    +target_schema: snapshots
+    +strategy: timestamp
+    +updated_at: updated_at

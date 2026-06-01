@@ -1,0 +1,22 @@
+# NEVER commit these — they contain secrets
+.env
+*.env
+docker-compose.override.yml
+
+# dbt artifacts
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# dlt state
+.dlt/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Airflow
+airflow/logs/
