@@ -207,4 +207,4 @@ retailco_pipeline/
 | Airflow UI not loading | Wait 60s, then check `docker compose logs airflow-webserver` |
 | Task fails with 429 | The extractor handles this automatically with backoff |
 | dbt test fails | Check `docker compose exec airflow-scheduler dbt test --profiles-dir /opt/airflow/dbt_project` |
-| Lake DB not accessible | Check `docker compose ps` — lake-db should be "healthy" |
+| Lake DB not accessible | Check `docker compose ps` - lake-db should be "healthy" |
