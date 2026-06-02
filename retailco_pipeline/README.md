@@ -1,5 +1,5 @@
 # RetailCo Modern Data Pipeline
-**HNG Internship Stage 8 - Team C**
+**HNG Stage 8 Task - Team C**
 
 A production-grade end-to-end data pipeline built with Apache Airflow, Python, dlt, dbt, and PostgreSQL all running in Docker.
 
