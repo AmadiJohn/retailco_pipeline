@@ -1,5 +1,4 @@
--- snapshots/snap_customers.sql
--- ─────────────────────────────────────────────────────────────
+/* snapshots/snap_customers.sql
 -- SCD Type 2 Snapshot: Customers
 --
 -- What SCD2 means (plain English):
@@ -11,7 +10,7 @@
 -- dbt snapshots do this automatically by comparing the updated_at
 -- timestamp. When it changes, dbt closes the old row (sets valid_to)
 -- and opens a new one (sets valid_from = now, valid_to = null, is_current = true).
--- ─────────────────────────────────────────────────────────────
+*/
 
 {% snapshot snap_customers %}
 
